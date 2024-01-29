@@ -11,7 +11,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
-import org.bson.types.ObjectId;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +22,7 @@ public class MainVerticle extends AbstractVerticle {
   private static final int httpPort = Integer.parseInt(System.getenv().getOrDefault("HTTP_PORT", "8080"));
 
   @Override
-  public void start(Promise<Void> startPromise) throws Exception {
+  public void start(Promise<Void> startPromise) {
     Router router = Router.router(vertx);
 
     router.route().handler(CorsHandler.create("*")
@@ -80,7 +79,7 @@ public class MainVerticle extends AbstractVerticle {
       .put("url", "localhost")
       .put("db_name", "streamboost"));
 
-    Map<String,String> objectId = new HashMap<String,String>();
+    Map<String,String> objectId = new HashMap<>();
     objectId.put("$oid",addressID);
 
     JsonObject document = new JsonObject()

@@ -10,6 +10,7 @@ public class MainClass {
 
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
+    logger.info("Starting...");
     vertx.deployVerticle(new MainVerticle());
   }
 }
