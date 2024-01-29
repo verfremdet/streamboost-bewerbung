@@ -33,7 +33,7 @@ dependencies {
   implementation("io.vertx:vertx-web-templ-thymeleaf")
   implementation("io.vertx:vertx-web")
   implementation("io.vertx:vertx-json-schema")
-  implementation("com.fasterxml.jackson.core:jackson-databind:2.0.1")
+  implementation("com.fasterxml.jackson.core:jackson-databind:2.14.0-rc1")
   implementation("io.vertx:vertx-mongo-client")
   implementation("org.mongodb:mongodb-driver-legacy:4.1.1")
   testImplementation("io.vertx:vertx-junit5")
