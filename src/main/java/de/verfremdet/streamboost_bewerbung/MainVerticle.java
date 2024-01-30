@@ -2,15 +2,16 @@ package de.verfremdet.streamboost_bewerbung;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.impl.logging.Logger;
 import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
-import io.vertx.ext.mongo.MongoClientDeleteResult;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import org.bson.types.ObjectId;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,9 +27,10 @@ public class MainVerticle extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     router.route().handler(CorsHandler.create("*")
-      .allowedMethod(io.vertx.core.http.HttpMethod.GET)
-      .allowedMethod(io.vertx.core.http.HttpMethod.POST)
-      .allowedMethod(io.vertx.core.http.HttpMethod.OPTIONS)
+      .allowedMethod(HttpMethod.GET)
+      .allowedMethod(HttpMethod.DELETE)
+      .allowedMethod(HttpMethod.POST)
+      .allowedMethod(HttpMethod.OPTIONS)
       .allowCredentials(true)
       .allowedHeader("Access-Control-Allow-Headers")
       .allowedHeader("Authorization")
@@ -41,6 +43,7 @@ public class MainVerticle extends AbstractVerticle {
     router.route().handler(BodyHandler.create());
     router.get("/api/getAddresses").handler(this::getAddresses);
     router.post("/api/deleteAddress").handler(this::deleteAddress);
+    router.post("/api/insertAddress").handler(this::insertAddress);
 
     vertx.createHttpServer()
       .requestHandler(router)
@@ -86,8 +89,6 @@ public class MainVerticle extends AbstractVerticle {
       .put("_id", objectId);
     mongoClient.removeDocument("addresses", document, res -> {
       if (res.succeeded()) {
-     //   MongoClientDeleteResult result = res.result();
-        MongoClientDeleteResult result = res.result();
         context.response()
           .end("ADDRESS DELETED");
       } else {
@@ -95,5 +96,50 @@ public class MainVerticle extends AbstractVerticle {
           .end("ERROR");
       }
     });
+  }
+
+  private void insertAddress(RoutingContext context) {
+    JsonObject body = context.getBodyAsJson().getJsonObject("address");
+    MongoClient mongoClient = MongoClient.create(vertx, new JsonObject()
+      .put("url", "localhost")
+      .put("db_name", "streamboost"));
+    Map<String,String> objectId = new HashMap<>();
+    objectId.put("$oid", new ObjectId().toString());
+
+    String firtName = body.getString("firstName");
+    String lastName = body.getString("lastName");
+    String birthday = body.getString("birthday");
+    String telephone = body.getString("telephone");
+
+    if (firtName == null || firtName == "") {
+      context.response()
+        .end("VORNAME IST LEER!");
+    } else if (lastName == null || lastName == "") {
+      context.response()
+        .end("NACHNAME IST LEER!");
+    } else if (birthday == null || birthday == "") {
+      context.response()
+        .end("GEBURSTAG IST LEER!");
+    } else if (telephone == null || telephone == "") {
+      context.response()
+        .end("TELEFONNUMMER IST LEER!");
+    } else {
+      JsonObject document = new JsonObject()
+        .put("_id", objectId)
+        .put("firstName", firtName)
+        .put("lastName", lastName)
+        .put("birthday", birthday)
+        .put("telephone", telephone);
+
+      mongoClient.insert("addresses", document, res -> {
+        if (res.succeeded()) {
+          context.response()
+            .end("ADDRESS INSERTED");
+        } else {
+          context.response()
+            .end("ERROR");
+        }
+      });
+    }
   }
 }
