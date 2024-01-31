@@ -28,7 +28,6 @@ public class MainVerticle extends AbstractVerticle {
 
     router.route().handler(CorsHandler.create("*")
       .allowedMethod(HttpMethod.GET)
-      .allowedMethod(HttpMethod.DELETE)
       .allowedMethod(HttpMethod.POST)
       .allowedMethod(HttpMethod.OPTIONS)
       .allowCredentials(true)
@@ -44,6 +43,7 @@ public class MainVerticle extends AbstractVerticle {
     router.get("/api/getAddresses").handler(this::getAddresses);
     router.post("/api/deleteAddress").handler(this::deleteAddress);
     router.post("/api/insertAddress").handler(this::insertAddress);
+    router.post("/api/editAddress").handler(this::editAddress);
 
     vertx.createHttpServer()
       .requestHandler(router)
@@ -75,37 +75,8 @@ public class MainVerticle extends AbstractVerticle {
 
   }
 
-  private void deleteAddress(RoutingContext context) {
-    JsonObject body = context.getBodyAsJson().getJsonObject("address");
-    String addressID = body.getString("addressID");
-    MongoClient mongoClient = MongoClient.create(vertx, new JsonObject()
-      .put("url", "localhost")
-      .put("db_name", "streamboost"));
-
-    Map<String,String> objectId = new HashMap<>();
-    objectId.put("$oid",addressID);
-
-    JsonObject document = new JsonObject()
-      .put("_id", objectId);
-    mongoClient.removeDocument("addresses", document, res -> {
-      if (res.succeeded()) {
-        context.response()
-          .end("ADDRESS DELETED");
-      } else {
-        context.response()
-          .end("ERROR");
-      }
-    });
-  }
-
   private void insertAddress(RoutingContext context) {
     JsonObject body = context.getBodyAsJson().getJsonObject("address");
-    MongoClient mongoClient = MongoClient.create(vertx, new JsonObject()
-      .put("url", "localhost")
-      .put("db_name", "streamboost"));
-    Map<String,String> objectId = new HashMap<>();
-    objectId.put("$oid", new ObjectId().toString());
-
     String firtName = body.getString("firstName");
     String lastName = body.getString("lastName");
     String birthday = body.getString("birthday");
@@ -124,6 +95,13 @@ public class MainVerticle extends AbstractVerticle {
       context.response()
         .end("TELEFONNUMMER IST LEER!");
     } else {
+      MongoClient mongoClient = MongoClient.create(vertx, new JsonObject()
+        .put("url", "localhost")
+        .put("db_name", "streamboost"));
+
+      Map<String,String> objectId = new HashMap<>();
+      objectId.put("$oid", new ObjectId().toString());
+
       JsonObject document = new JsonObject()
         .put("_id", objectId)
         .put("firstName", firtName)
@@ -141,5 +119,79 @@ public class MainVerticle extends AbstractVerticle {
         }
       });
     }
+  }
+  private void editAddress(RoutingContext context) {
+    JsonObject body = context.getBodyAsJson().getJsonObject("address");
+    String id = body.getString("id");
+    String firtName = body.getString("firstName");
+    String lastName = body.getString("lastName");
+    String birthday = body.getString("birthday");
+    String telephone = body.getString("telephone");
+
+    if (id == null || id == "") {
+      context.response()
+        .end("ERROR");
+    } else if (firtName == null || firtName == "") {
+      context.response()
+        .end("VORNAME IST LEER!");
+    } else if (lastName == null || lastName == "") {
+      context.response()
+        .end("NACHNAME IST LEER!");
+    } else if (birthday == null || birthday == "") {
+      context.response()
+        .end("GEBURSTAG IST LEER!");
+    } else if (telephone == null || telephone == "") {
+      context.response()
+        .end("TELEFONNUMMER IST LEER!");
+    } else {
+      MongoClient mongoClient = MongoClient.create(vertx, new JsonObject()
+        .put("url", "localhost")
+        .put("db_name", "streamboost"));
+
+      Map<String, String> objectId = new HashMap<>();
+      objectId.put("$oid", id);
+
+      JsonObject query = new JsonObject()
+        .put("_id", objectId);
+
+      JsonObject document = new JsonObject()
+        .put("firstName", firtName)
+        .put("lastName", lastName)
+        .put("birthday", birthday)
+        .put("telephone", telephone);
+
+      mongoClient.replaceDocuments("addresses", query, document, res -> {
+        if (res.succeeded()) {
+          context.response()
+            .end("ADDRESS SAVED");
+        } else {
+          context.response()
+            .end("ERROR");
+        }
+      });
+    }
+  }
+
+  private void deleteAddress(RoutingContext context) {
+    JsonObject body = context.getBodyAsJson().getJsonObject("address");
+    String id = body.getString("id");
+    MongoClient mongoClient = MongoClient.create(vertx, new JsonObject()
+      .put("url", "localhost")
+      .put("db_name", "streamboost"));
+
+    Map<String,String> objectId = new HashMap<>();
+    objectId.put("$oid", id);
+
+    JsonObject document = new JsonObject()
+      .put("_id", objectId);
+    mongoClient.removeDocument("addresses", document, res -> {
+      if (res.succeeded()) {
+        context.response()
+          .end("ADDRESS DELETED");
+      } else {
+        context.response()
+          .end("ERROR");
+      }
+    });
   }
 }
