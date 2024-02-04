@@ -8,6 +8,10 @@ public class MainClass {
 
   private static final Logger logger = LoggerFactory.getLogger(MainClass.class);
 
+  /**
+   * This is the entry point of the application.
+   * It initializes a Vertx instance and deploys the MainVerticle.
+   */
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
     logger.info("Starting...");
