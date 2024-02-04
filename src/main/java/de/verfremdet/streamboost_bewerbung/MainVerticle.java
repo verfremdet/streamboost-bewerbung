@@ -17,7 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MainVerticle extends AbstractVerticle {
+public class
+MainVerticle extends AbstractVerticle {
 
   private static final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
 
@@ -98,14 +99,13 @@ public class MainVerticle extends AbstractVerticle {
     MongoClient mongoClient = MongoClient.create(vertx, new JsonObject()
       .put("url", "localhost")
       .put("db_name", "streamboost"));
-    JsonObject document = new JsonObject();
 
     /**
      *
-     * GET ALL ADDRESSES
+     *  Retrieves addresses from the MongoDB database
      *
      */
-    mongoClient.find("addresses", document, res -> {
+    mongoClient.find("addresses", new JsonObject(), res -> {
       if (res.succeeded()) {
         List<JsonObject> list = res.result();
         context.response()
@@ -191,7 +191,8 @@ public class MainVerticle extends AbstractVerticle {
   }
 
   /**
-   * Edits an address in the database.
+   *
+   * Retrieves and edit an address from the MongoDB database and respond with a CUSTOM MESSAGE, "ADDRESS SAVED" or "ERROR".
    *
    * @param context The routing context.
    */
