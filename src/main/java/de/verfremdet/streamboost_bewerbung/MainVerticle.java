@@ -37,7 +37,6 @@ MainVerticle extends AbstractVerticle {
    */
   @Override
   public void start(Promise<Void> startPromise) {
-    Router router = Router.router(vertx);
 
     /**
      * The Router class is responsible for handling HTTP requests and routing them to the appropriate controller.
@@ -45,8 +44,8 @@ MainVerticle extends AbstractVerticle {
      *
      * Example usage:
      * Router router = new Router();
-     * router.addRoute("/home", HomeController.class); // Maps the URL "/home" to the HomeController class
-     * router.addRoute("/user/:id", UserController.class); // Maps the URL "/user/:id" to the UserController class
+     * router.addRoute("/home", this::homeRoute); // Maps the URL "/home" to the HomeController class
+     * router.addRoute("/user/:id", this::openUser); // Maps the URL "/user/:id" to the UserController class
      *
      * The Router class supports both static and dynamic route patterns. Static route patterns are fixed URLs,
      * while dynamic route patterns include parameters that can vary based on the request.
@@ -61,6 +60,14 @@ MainVerticle extends AbstractVerticle {
      * @see HomeController
      * @see UserController
      */
+
+    Router router = Router.router(vertx);
+
+    /**
+     *
+     *  Handle Cors
+     *
+     */
     router.route().handler(CorsHandler.create("*")
       .allowedMethod(HttpMethod.GET)
       .allowedMethod(HttpMethod.POST)
@@ -73,6 +80,11 @@ MainVerticle extends AbstractVerticle {
       .allowedHeader("Access-Control-Allow-Credentials")
       .allowedHeader("Content-Type"));
 
+    /**
+     *
+     *  Handle Routes
+     *
+     */
     router.route().handler(BodyHandler.create());
     router.get("/api/getAddresses").handler(this::getAddresses);
     router.post("/api/deleteAddress").handler(this::deleteAddress);
@@ -96,13 +108,18 @@ MainVerticle extends AbstractVerticle {
    * @param context the routing context for the HTTP request and response
    */
   private void getAddresses(RoutingContext context) {
+    /**
+     *
+     * Create Connection to MongoDB database
+     *
+     */
     MongoClient mongoClient = MongoClient.create(vertx, new JsonObject()
       .put("url", "localhost")
       .put("db_name", "streamboost"));
 
     /**
      *
-     *  Retrieves addresses from the MongoDB database
+     *  Retrieves all addresses from the MongoDB database and respond with address List as String
      *
      */
     mongoClient.find("addresses", new JsonObject(), res -> {
@@ -120,7 +137,8 @@ MainVerticle extends AbstractVerticle {
   }
 
   /**
-   * Inserts an address into the database.
+   *
+   * Retrieves Body Context, creates a new JsonObject document and insert it into the MongoDB database and respond with a CUSTOM MESSAGE, "ADDRESS INSERTED" or "ERROR"
    *
    * @param context the routing context
    */
@@ -148,6 +166,11 @@ MainVerticle extends AbstractVerticle {
       context.response()
         .end("TELEFONNUMMER IST LEER!");
     } else {
+      /**
+       *
+       * Create Connection to MongoDB database
+       *
+       */
       MongoClient mongoClient = MongoClient.create(vertx, new JsonObject()
         .put("url", "localhost")
         .put("db_name", "streamboost"));
@@ -177,14 +200,18 @@ MainVerticle extends AbstractVerticle {
         .put("lastName", lastName)
         .put("birthday", birthday)
         .put("telephone", telephone);
-
+      /**
+       *
+       * INSERT document into the MongoDB database and respond with "ADDRESS INSERTED" or "ERROR"
+       *
+       */
       mongoClient.insert("addresses", document, res -> {
         if (res.succeeded()) {
           context.response()
-            .end("ADDRESS INSERTED");
+            .end("ADDRESS INSERTED"); // DEFAULT "ADDRESS INSERTED"
         } else {
           context.response()
-            .end("ERROR");
+            .end("ERROR"); // DEFAULT "ERROR"
         }
       });
     }
@@ -192,7 +219,7 @@ MainVerticle extends AbstractVerticle {
 
   /**
    *
-   * Retrieves and edit an address from the MongoDB database and respond with a CUSTOM MESSAGE, "ADDRESS SAVED" or "ERROR".
+   * Retrieves and edit address from the MongoDB database and respond with a CUSTOM MESSAGE, "ADDRESS SAVED" or "ERROR".
    *
    * @param context The routing context.
    */
@@ -225,6 +252,11 @@ MainVerticle extends AbstractVerticle {
       context.response()
         .end("TELEFONNUMMER IST LEER!");
     } else {
+      /**
+       *
+       * Create Connection to MongoDB database
+       *
+       */
       MongoClient mongoClient = MongoClient.create(vertx, new JsonObject()
         .put("url", "localhost")
         .put("db_name", "streamboost"));
@@ -256,26 +288,38 @@ MainVerticle extends AbstractVerticle {
         .put("birthday", birthday)
         .put("telephone", telephone);
 
+      /**
+       *
+       * Searches for Address Document in the MongoDB database and REPLACE it with EDITED document and respond with "ADDRESS SAVED" or "ERROR".
+       *
+       */
       mongoClient.replaceDocuments("addresses", query, document, res -> {
         if (res.succeeded()) {
           context.response()
-            .end("ADDRESS SAVED");
+            .end("ADDRESS SAVED"); // DEFAULT "ADDRESS SAVED"
         } else {
           context.response()
-            .end("ERROR");
+            .end("ERROR"); // DEFAULT "ERROR"
         }
       });
     }
   }
 
   /**
-   * Deletes an address from the database.
+   *
+   * Searches for Address Document, REMOVE it from the MongoDB database and respond with "ADDRESS DELETED" or "ERROR".
    *
    * @param context the routing context for handling the request
    */
   private void deleteAddress(RoutingContext context) {
     JsonObject body = context.getBodyAsJson().getJsonObject("address");
     String id = body.getString("id");
+
+    /**
+     *
+     * Create Connection to MongoDB database
+     *
+     */
     MongoClient mongoClient = MongoClient.create(vertx, new JsonObject()
       .put("url", "localhost")
       .put("db_name", "streamboost"));
@@ -294,15 +338,16 @@ MainVerticle extends AbstractVerticle {
 
     /**
      *
-     * Searches for Address Document and removes it.
+     * Searches for Address Document and REMOVE it from the MongoDB database and respond with "ADDRESS DELETED" or "ERROR".
+     *
      */
     mongoClient.removeDocument("addresses", document, res -> {
       if (res.succeeded()) {
         context.response()
-          .end("ADDRESS DELETED");
+          .end("ADDRESS DELETED"); // DEFAULT "ADDRESS DELETED"
       } else {
         context.response()
-          .end("ERROR");
+          .end("ERROR"); // DEFAULT "ERROR"
       }
     });
   }

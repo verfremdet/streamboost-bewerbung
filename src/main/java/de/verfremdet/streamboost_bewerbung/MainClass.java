@@ -10,7 +10,7 @@ public class MainClass {
 
   /**
    * This is the entry point of the application.
-   * It initializes a Vertx instance and deploys the MainVerticle.
+   * It initializes a Vertx instance and deploys the MainVerticle Class
    */
   public static void main(String[] args) {
     Vertx vertx = Vertx.vertx();
